@@ -1,15 +1,18 @@
 from typing import List
 import pdfplumber
 from io import BytesIO
+import tiktoken
 
 class DocumentHandler:
     """Handles extraction of text from PDF documents."""
     
-    def __init__(self, pdf_file: bytes, max_tokens: int = 512, overlap: int = 50):
+    def __init__(self, pdf_file: bytes, model_name: str, max_tokens: int = 12800, overlap_tokens: int = 500):
         """Initializes the DocumentHandler with a file-like object."""
         self.pdf_file = pdf_file
+        self.model_name = model_name
         self.max_tokens = max_tokens
-        self.overlap = overlap  # Overlap between chunks to maintain context
+        self.overlap_tokens = overlap_tokens
+        self.encoding = tiktoken.encoding_for_model(self.model_name)
 
     def extract_text(self) -> str:
         """Extracts all text from the PDF."""
@@ -20,22 +23,24 @@ class DocumentHandler:
         return text
 
     def chunk_text(self, text: str) -> List[str]:
-        """Splits text into chunks based on the maximum token length."""
-        words = text.split()
+        """Splits text into chunks with overlapping tokens."""
+        tokens = self.encoding.encode(text)  # Convert text into tokens
         chunks = []
-        current_chunk = []
-        current_length = 0
 
-        for word in words:
-            if current_length + len(word) + 1 > self.max_tokens:
-                chunks.append(" ".join(current_chunk))
-                current_chunk = current_chunk[-self.overlap:] if self.overlap < len(current_chunk) else current_chunk
-                current_length = sum(len(w) for w in current_chunk) + len(current_chunk) - 1
+        # Initialize start index for token chunks
+        start_index = 0
+        while start_index < len(tokens):
+            # Determine the end index for the current chunk
+            end_index = min(start_index + self.max_tokens, len(tokens))
 
-            current_chunk.append(word)
-            current_length += len(word) + 1
-
-        if current_chunk:
-            chunks.append(" ".join(current_chunk))
+            # Create the chunk of tokens
+            chunk_tokens = tokens[start_index:end_index]
+            chunk_text = self.encoding.decode(chunk_tokens)  # Decode tokens back to text
+            
+            # Add the chunk to the list
+            chunks.append(chunk_text.strip())
+            
+            # Move the start index forward for the next chunk, retaining overlap
+            start_index = end_index - self.overlap_tokens
 
         return chunks
