@@ -10,7 +10,13 @@ class DocumentHandler:
         """Initializes the DocumentHandler with a file-like object and a tokenizer."""
         self.pdf_file = pdf_file
         self.tokenizer = tokenizer
-        self.max_tokens = max_tokens
+        
+        # Determine max_tokens based on model_name
+        if "gpt-4o-mini" in model_name.lower():
+            self.max_tokens = 128000  # Context window for GPT-4o-mini
+        else:
+            self.max_tokens = max_tokens
+        
         self.overlap = overlap  # Overlap between chunks to maintain context
 
     def extract_text(self) -> str:
@@ -84,5 +90,3 @@ class DocumentHandler:
             chunks.append(chunk_text)
     
         return chunks
-
-
