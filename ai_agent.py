@@ -1,4 +1,4 @@
-from openai import OpenAI
+from handlers.query_handler import QueryHandler
 from handlers.document_handler import DocumentHandler
 from handlers.slack_notifier import SlackNotifier
 from config.config import Config
@@ -13,10 +13,8 @@ class AIAgent:
         self.slack_notifier = SlackNotifier(slack_token or Config.SLACK_API_TOKEN)
         self.slack_channel = slack_channel or Config.SLACK_CHANNEL
         self.document_handlers = [DocumentHandler(pdf_file) for pdf_file in pdf_files]
-        self.openai_api_key = openai_api_key  # Set the OpenAI API key
-        self.client = OpenAI(api_key=self.openai_api_key)
-          # Set the OpenAI API key
-
+        self.query_handler = QueryHandler(model_name=self.model_name, openai_api_key=self.openai_api_key)
+    
     def process_and_notify(self, questions: List[str], update_status_func=None):
         all_text_chunks = []
 
@@ -35,24 +33,9 @@ class AIAgent:
             if update_status_func:
                 update_status_func(f"Processing question {i + 1}/{len(questions)}: '{question}'...")
 
-            answer = self.query_openai_model(all_text_chunks, question)
+            answer = self.query_handler.handle_query(all_text_chunks, question)
             all_responses.append({"question": question, "answer": answer})
 
         # Format output as structured JSON
         output_json = {"questions": all_responses}
         self.slack_notifier.post_message(self.slack_channel, json.dumps(output_json, indent=4))
-
-    def query_openai_model(self, text_chunks: List[str], question: str) -> str:
-        prompt = "\n".join(text_chunks) + f"\nQuestion: {question}\nAnswer:"
-        try:
-            response = self.client.chat.completions.create(model=self.model_name,
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=150)
-            answer = response.choices[0].message.content.strip()
-            return answer if answer else "Data Not Available"
-        except Exception as e:
-            return f"Error: {str(e)}"
-
