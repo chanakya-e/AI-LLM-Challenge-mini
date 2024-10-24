@@ -8,13 +8,7 @@ class DocumentHandler:
     def __init__(self, pdf_file: bytes, max_tokens: int = 512, overlap: int = 50):
         """Initializes the DocumentHandler with a file-like object."""
         self.pdf_file = pdf_file
-        
-        # Determine max_tokens based on model_name
-        if "gpt-4o-mini" in model_name.lower():
-            self.max_tokens = 128000  # Context window for GPT-4o-mini
-        else:
-            self.max_tokens = max_tokens
-        
+        self.max_tokens = max_tokens
         self.overlap = overlap  # Overlap between chunks to maintain context
 
     def extract_text(self) -> str:
