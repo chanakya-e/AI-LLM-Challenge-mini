@@ -68,5 +68,5 @@ class AIAgent:
             all_responses.append({"question": question, "answer": answer})
 
         # Post answers to Slack
-        output_json = {"questions": all_responses}
+        output_json = {"questions and their answers": all_responses}
         self.slack_notifier.post_message(self.slack_channel, json.dumps(output_json, indent=4))
