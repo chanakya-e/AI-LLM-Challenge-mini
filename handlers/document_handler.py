@@ -6,12 +6,11 @@ import tiktoken
 class DocumentHandler:
     """Handles extraction of text from PDF documents."""
     
-    def __init__(self, pdf_file: bytes, model_name: str, max_tokens: int = 12800, overlap_tokens: int = 50):
+    def __init__(self, pdf_file: bytes, model_name: str, max_tokens: int = 150):
         """Initializes the DocumentHandler with a file-like object."""
         self.pdf_file = pdf_file
         self.model_name = model_name
         self.max_tokens = max_tokens
-        self.overlap_tokens = overlap_tokens
         self.encoding = tiktoken.encoding_for_model(self.model_name)
 
     def extract_text(self) -> str:
@@ -23,7 +22,7 @@ class DocumentHandler:
         return text
 
     def chunk_text(self, text: str) -> List[str]:
-        """Splits text into chunks with overlapping tokens."""
+        """Splits text into chunks"""
         tokens = self.encoding.encode(text)  # Convert text into tokens
         chunks = []
 
@@ -40,7 +39,6 @@ class DocumentHandler:
             # Add the chunk to the list
             chunks.append(chunk_text.strip())
             
-            # Move the start index forward for the next chunk, retaining overlap
-            start_index = end_index - self.overlap_tokens
-
+            # Move the start index forward for the next chunk
+            start_index = end_index
         return chunks
