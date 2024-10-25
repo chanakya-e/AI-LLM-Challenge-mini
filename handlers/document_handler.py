@@ -6,7 +6,7 @@ import tiktoken
 class DocumentHandler:
     """Handles extraction of text from PDF documents."""
     
-    def __init__(self, pdf_file: bytes, model_name: str, max_tokens: int = 12800, overlap_tokens: int = 500):
+    def __init__(self, pdf_file: bytes, model_name: str, max_tokens: int = 12800, overlap_tokens: int = 50):
         """Initializes the DocumentHandler with a file-like object."""
         self.pdf_file = pdf_file
         self.model_name = model_name
